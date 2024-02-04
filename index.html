@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Управление электрочайником</title>
+        <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
+        <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+        <script crossorigin src="https://unpkg.com/@babel/standalone"></script>
+    </head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        .log {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+
+        .button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 15px 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .button:last-child {
+            margin-right: 0;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        .button[disabled] {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+    </style>
+
+    <body>
+        <div id="app"></div>
+
+        <script type="text/babel">
+            class ElectricKettle {
+                constructor() {
+                    this.isOn = false;
+                    this.temperature = 20; // начальная температура
+                    this.waterAmount = 0; // объем воды от 0 до 1.0
+                    this.intervalId = null;
+                }
+
+                // Метод для заполнения чайника водой
+                fill(waterAmount) {
+                    if (waterAmount < 0 || waterAmount > 1) {
+                        console.log("Неверное количество воды. Укажите значение от 0 до 1.");
+                        return;
+                    }
+                    this.waterAmount = waterAmount;
+                    console.log(`Чайник заполнен на ${this.waterAmount * 100}%`);
+                }
+
+                // Метод для включения чайника
+                turnOn() {
+                    if (this.isOn) {
+                        console.log("Чайник уже включен.");
+                        return;
+                    }
+                    if (this.waterAmount === 0) {
+                        console.log("Добавьте воду перед включением чайника.");
+                        return;
+                    }
+                    this.isOn = true;
+                    console.log("Чайник включен.");
+                    this.intervalId = setInterval(() => this.increaseTemperature(), 1000);
+                }
+
+                // Метод для увеличения температуры и автоматического выключения
+                increaseTemperature() {
+                    if (this.temperature < 100) {
+                        this.temperature += (100 - 20) / 10; // Увеличиваем температуру
+                        console.log(`Температура чайника: ${this.temperature.toFixed(1)}°C`);
+                    } else {
+                        this.turnOff();
+                        console.log("Чайник вскипел и выключен.");
+                    }
+                }
+
+                // Метод для выключения чайника
+                turnOff() {
+                    this.isOn = false;
+                    clearInterval(this.intervalId);
+                    console.log("Чайник выключен.");
+                }
+            }
+
+            class App extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.kettle = new ElectricKettle();
+                    this.state = { log: [] };
+                }
+
+                handleFill = () => {
+                    this.kettle.fill(1); // Заполняем чайник полностью
+                    this.addLog("Чайник заполнен на 100%");
+                };
+
+                handleTurnOn = () => {
+                    if (this.kettle.isOn) {
+                        this.addLog("Чайник уже включен.");
+                        return;
+                    }
+                    this.kettle.turnOn();
+                    this.addLog("Чайник включен.");
+                    this.temperatureInterval = setInterval(() => {
+                        if (this.kettle.isOn) {
+                            this.addLog(`Температура чайника: ${this.kettle.temperature.toFixed(1)}°C`);
+                        } else {
+                            clearInterval(this.temperatureInterval);
+                        }
+                    }, 1000);
+                };
+
+                handleTurnOff = () => {
+                    this.kettle.turnOff();
+                    this.addLog("Чайник выключен.");
+                };
+
+                addLog = (message) => {
+                    this.setState(state => ({ log: [...state.log, message] }));
+                };
+
+                render() {
+                    return (
+                        <div className="container">
+                            <h1>Управление электрочайником</h1>
+                            <button className="button" onClick={this.handleFill}>Заполнить чайник</button>
+                            <button className="button" onClick={this.handleTurnOn}>Включить чайник</button>
+                            <button className="button" onClick={this.handleTurnOff}>Выключить чайник</button>
+
+                            {this.state.log.length > 0 && (
+                                <div className="log">
+                                    {this.state.log.map((entry, index) => (
+                                        <div key={index}>{entry}</div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
+            }
+
+            ReactDOM.render(<App />, document.getElementById('app'));
+        </script>
+    </body>
+</html>
